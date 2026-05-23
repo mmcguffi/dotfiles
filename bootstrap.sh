@@ -93,8 +93,9 @@ echo "==> Applying home-manager configuration..."
 echo "    (this may take a few minutes on first run as packages are fetched)"
 echo
 
+BACKUP_EXT="hm-backup-$(date +%Y%m%d%H%M%S)"
 nix --extra-experimental-features "nix-command flakes" \
-  run github:nix-community/home-manager -- switch --flake "$DOTFILES_DIR#$FLAKE_TARGET"
+  run github:nix-community/home-manager -- switch -b "$BACKUP_EXT" --flake "$DOTFILES_DIR#$FLAKE_TARGET"
 
 # --- macOS: Homebrew for casks and tap-only tools ---
 if [[ "$OS" == "Darwin" ]]; then
