@@ -104,7 +104,12 @@ if [[ "$OS" == "Darwin" ]]; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   fi
   echo "==> Installing macOS casks and tap tools via Homebrew..."
-  brew bundle --file="$DOTFILES_DIR/configs/Brewfile"
+  if ! brew bundle --file="$DOTFILES_DIR/configs/Brewfile"; then
+    echo
+    echo "WARNING: brew bundle failed. Home Manager setup completed, but some Homebrew apps/tools need manual attention."
+    echo "         Re-run after fixing Homebrew or Xcode Command Line Tools:"
+    echo "         brew bundle --file=\"$DOTFILES_DIR/configs/Brewfile\""
+  fi
 fi
 
 echo
