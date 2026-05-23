@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Apply dotfiles-managed Obsidian settings to a vault.
+# Usage: obsidian-init ~/Documents/my-vault
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [ -z "${DOTFILES_DIR:-}" ]; then
+  if [ -d "$SCRIPT_DIR/../configs/obsidian" ]; then
+    DOTFILES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+  elif [ -d "$HOME/dotfiles/configs/obsidian" ]; then
+    DOTFILES_DIR="$HOME/dotfiles"
+  else
+    echo "Could not find dotfiles Obsidian configs. Set DOTFILES_DIR." >&2
+    exit 1
+  fi
+fi
+
+OBSIDIAN_CONFIGS="$DOTFILES_DIR/configs/obsidian"
+OBSIDIAN_VAULT_FILES="$DOTFILES_DIR/configs/obsidian-vault"
+
+VAULT="${1:-$HOME/Documents/notes}"
+VAULT_OBS="$VAULT/.obsidian"
+
+mkdir -p "$VAULT_OBS"
+
+while IFS= read -r f; do
+  rel="${f#$OBSIDIAN_CONFIGS/}"
+  target="$VAULT_OBS/$rel"
+  mkdir -p "$(dirname "$target")"
+  ln -sf "$f" "$target"
+  echo "  linked .obsidian/$rel"
+done < <(find "$OBSIDIAN_CONFIGS" -type f | sort)
+
+if [ -d "$OBSIDIAN_VAULT_FILES" ]; then
+  while IFS= read -r f; do
+    rel="${f#$OBSIDIAN_VAULT_FILES/}"
+    target="$VAULT/$rel"
+    mkdir -p "$(dirname "$target")"
+    ln -sf "$f" "$target"
+    echo "  linked $rel"
+  done < <(find "$OBSIDIAN_VAULT_FILES" -type f | sort)
+fi
+
+echo "Done — Obsidian settings applied to $VAULT"

@@ -1,0 +1,8 @@
+# Machine-specific overrides (untracked)
+Include ~/.ssh/config.local
+
+# Example:
+# Host dev-example
+#     HostName dev.example.com
+#     User ec2-user
+#     IdentityFile ~/.ssh/example_key

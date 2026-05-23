@@ -1,0 +1,346 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+# --- Config ---
+REGION="${AWS_REGION:-${AWS_DEFAULT_REGION:-us-east-1}}"
+DEFAULT_INSTANCE="${EC2_DEFAULT_INSTANCE:-}"
+EC2_CONFIG_FILE="${EC2_CONFIG_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/ec2-instances.zsh}"
+
+typeset -A INSTANCES
+INSTANCES=()
+
+[[ -r "$EC2_CONFIG_FILE" ]] && source "$EC2_CONFIG_FILE"
+
+if [[ -z "$DEFAULT_INSTANCE" ]]; then
+  for instance_name in ${(k)INSTANCES}; do
+    DEFAULT_INSTANCE="$instance_name"
+    break
+  done
+fi
+
+# --- Helpers ---
+
+_require_name() {
+  local name="${1:-$DEFAULT_INSTANCE}"
+  if [[ -z "$name" ]]; then
+    _error "No instance specified. Pass an instance ID/name or configure $EC2_CONFIG_FILE." >&2
+    return 1
+  fi
+  echo "$name"
+}
+
+_resolve() {
+  local name="${1:-$DEFAULT_INSTANCE}"
+  local id="${INSTANCES[$name]:-}"
+  if [[ -z "$id" ]]; then
+    echo "$name"
+  else
+    echo "$id"
+  fi
+}
+
+_header() {
+  gum style --bold --foreground 212 "  $1"
+}
+
+_success() {
+  gum style --bold --foreground 82 "✓ $1"
+}
+
+_warn() {
+  gum style --bold --foreground 214 "! $1"
+}
+
+_error() {
+  gum style --bold --foreground 196 "✗ $1"
+}
+
+_get_state() {
+  local instance_id="$1"
+  gum spin --spinner dot --title "Fetching instance state..." -- \
+    aws ec2 describe-instances \
+      --instance-ids "$instance_id" \
+      --query 'Reservations[].Instances[].State.Name' \
+      --output text \
+      --region "$REGION" > /tmp/_ec2_state
+  cat /tmp/_ec2_state
+}
+
+_pick_type() {
+  local cyan=$'\033[36m' green=$'\033[32m' reset=$'\033[0m'
+  local selection
+  selection=$(gum choose --header "Select instance type" --cursor "▸ " \
+    "tiny    m6a.xlarge    (${cyan}4${reset} vCPU, ${green}16${reset} GB)" \
+    "small   m6a.4xlarge   (${cyan}16${reset} vCPU, ${green}64${reset} GB)" \
+    "big     c6a.16xlarge  (${cyan}64${reset} vCPU, ${green}128${reset} GB)" \
+    "custom")
+
+  [[ -z "$selection" ]] && return 1
+
+  if [[ "$selection" == "custom" ]]; then
+    gum input --placeholder "e.g. r6a.2xlarge" --header "Enter instance type" --cursor.foreground 212
+  else
+    echo "${${(s: :)selection}[2]}"
+  fi
+}
+
+_confirm() {
+  gum confirm --affirmative "Yes" --negative "No" "$1"
+}
+
+_wait_stopped() {
+  local instance_id="$1"
+  gum spin --spinner pulse --title "Waiting for instance to stop..." -- \
+    aws ec2 wait instance-stopped --instance-ids "$instance_id" --region "$REGION"
+}
+
+_wait_running() {
+  local instance_id="$1"
+  gum spin --spinner pulse --title "Waiting for instance to start..." -- \
+    aws ec2 wait instance-running --instance-ids "$instance_id" --region "$REGION"
+}
+
+# --- Commands ---
+
+cmd_state() {
+  local name="${1:-}"
+  if [[ -z "$name" ]]; then
+    if (( ${#INSTANCES[@]} == 0 )); then
+      _error "No instances configured. Pass an instance ID or create $EC2_CONFIG_FILE."
+      return 1
+    fi
+
+    _header "All instances"
+    echo
+    local ids=(${(v)INSTANCES})
+    local json
+    json=$(gum spin --spinner dot --title "Fetching instance states..." --show-output -- \
+      aws ec2 describe-instances \
+        --instance-ids $ids \
+        --query 'Reservations[].Instances[].{Name:Tags[?Key==`Name`]|[0].Value,State:State.Name,Type:InstanceType,ID:InstanceId}' \
+        --output json \
+        --region "$REGION")
+
+    echo "$json" | python3 -c "
+import sys, json
+
+data = json.load(sys.stdin)
+green, yellow, red, reset, dim, bold = '\033[32m', '\033[33m', '\033[31m', '\033[0m', '\033[2m', '\033[1m'
+
+# Calculate column widths
+names = [d['Name'] or '-' for d in data]
+types = [d['Type'] for d in data]
+ids = [d['ID'] for d in data]
+states = [d['State'] for d in data]
+
+nw = max(len(s) for s in names + ['NAME'])
+sw = max(len(s) for s in states + ['STATE'])
+tw = max(len(s) for s in types + ['TYPE'])
+iw = max(len(s) for s in ids + ['ID'])
+
+# Header
+print(f'  {dim}{\"NAME\":<{nw}}  {\"STATE\":<{sw}}  {\"TYPE\":<{tw}}  {\"ID\":<{iw}}{reset}')
+print(f'  {dim}{\"─\" * nw}  {\"─\" * sw}  {\"─\" * tw}  {\"─\" * iw}{reset}')
+
+# Rows
+for d in data:
+    state = d['State']
+    if state == 'running':
+        cs = green + state + reset
+    elif state == 'stopped':
+        cs = yellow + state + reset
+    else:
+        cs = red + state + reset
+    # Pad after color codes (they don't take visual space)
+    state_pad = ' ' * (sw - len(state))
+    print(f'  {d[\"Name\"] or \"-\":<{nw}}  {cs}{state_pad}  {d[\"Type\"]:<{tw}}  {dim}{d[\"ID\"]}{reset}')
+"
+  else
+    local instance_id
+    instance_id=$(_resolve "$name")
+    _header "Instance: $name"
+    echo
+
+    local json
+    json=$(gum spin --spinner dot --title "Fetching instance state..." --show-output -- \
+      aws ec2 describe-instances \
+        --instance-ids "$instance_id" \
+        --query 'Reservations[].Instances[].{State:State.Name,Type:InstanceType,LaunchTime:LaunchTime,PrivateIP:PrivateIpAddress}' \
+        --output json \
+        --region "$REGION")
+
+    echo "$json" | python3 -c "
+import sys, json
+
+d = json.load(sys.stdin)[0]
+green, yellow, red, reset, dim = '\033[32m', '\033[33m', '\033[31m', '\033[0m', '\033[2m'
+
+state = d['State']
+if state == 'running':
+    cs = green + state + reset
+elif state == 'stopped':
+    cs = yellow + state + reset
+else:
+    cs = red + state + reset
+
+rows = [
+    ('State', cs),
+    ('Type', d['Type']),
+    ('Private IP', d.get('PrivateIP') or '-'),
+    ('Last Launch', d.get('LaunchTime') or '-'),
+]
+
+fw = max(len(r[0]) for r in rows)
+for label, value in rows:
+    print(f'  {dim}{label:<{fw}}{reset}  {value}')
+"
+  fi
+}
+
+cmd_start() {
+  local name
+  name=$(_require_name "${1:-}") || return 1
+  local instance_id
+  instance_id=$(_resolve "$name")
+
+  _header "Instance: $name"
+  echo
+
+  local state
+  state=$(_get_state "$instance_id")
+
+  if [[ "$state" == "running" ]]; then
+    _success "$name is already running."
+    return 0
+  fi
+
+  if [[ "$state" == "stopped" ]]; then
+    _warn "Instance is stopped"
+    echo
+    local new_type
+    new_type=$(_pick_type) || return 1
+
+    gum spin --spinner dot --title "Setting instance type to $new_type..." -- \
+      aws ec2 modify-instance-attribute \
+        --instance-id "$instance_id" \
+        --instance-type "{\"Value\":\"$new_type\"}" \
+        --region "$REGION"
+    _success "Type set to $new_type"
+
+    echo
+    aws ec2 start-instances --instance-ids "$instance_id" --region "$REGION" --output text > /dev/null
+    _wait_running "$instance_id"
+    _success "$name is running!"
+  else
+    _error "$name is in state '$state' — cannot start."
+    return 1
+  fi
+}
+
+cmd_stop() {
+  local name
+  name=$(_require_name "${1:-}") || return 1
+  local instance_id
+  instance_id=$(_resolve "$name")
+
+  _header "Instance: $name"
+  echo
+
+  local state
+  state=$(_get_state "$instance_id")
+
+  if [[ "$state" == "stopped" ]]; then
+    _success "$name is already stopped."
+    return 0
+  fi
+
+  if [[ "$state" != "running" ]]; then
+    _error "$name is in state '$state' — cannot stop."
+    return 1
+  fi
+
+  aws ec2 stop-instances --instance-ids "$instance_id" --region "$REGION" --output text > /dev/null
+  _wait_stopped "$instance_id"
+  _success "$name is stopped."
+}
+
+cmd_change() {
+  local name
+  name=$(_require_name "${1:-}") || return 1
+  local instance_id
+  instance_id=$(_resolve "$name")
+
+  _header "Instance: $name"
+  echo
+
+  local state
+  state=$(_get_state "$instance_id")
+
+  if [[ "$state" == "running" ]]; then
+    _warn "Instance is currently running."
+    if _confirm "Stop it to change instance type?"; then
+      aws ec2 stop-instances --instance-ids "$instance_id" --region "$REGION" --output text > /dev/null
+      _wait_stopped "$instance_id"
+      _success "Stopped."
+      echo
+    else
+      _error "Aborted — instance must be stopped to change type."
+      return 1
+    fi
+  elif [[ "$state" != "stopped" ]]; then
+    _error "$name is in state '$state' — must be stopped to change type."
+    return 1
+  fi
+
+  local new_type
+  new_type=$(_pick_type) || return 1
+
+  echo
+  gum spin --spinner dot --title "Changing to $new_type..." -- \
+    aws ec2 modify-instance-attribute \
+      --instance-id "$instance_id" \
+      --instance-type "{\"Value\":\"$new_type\"}" \
+      --region "$REGION"
+  _success "Updated to $new_type"
+
+  echo
+  if _confirm "Start instance now?"; then
+    aws ec2 start-instances --instance-ids "$instance_id" --region "$REGION" --output text > /dev/null
+    _wait_running "$instance_id"
+    _success "$name is running!"
+  fi
+}
+
+# --- Main ---
+
+usage() {
+  gum style --border rounded --padding "0 1" --border-foreground 212 \
+    "$(gum style --bold 'ec2') — EC2 instance manager" \
+    "" \
+    "$(gum style --bold 'USAGE')" \
+    "  ec2 <command> [instance]" \
+    "" \
+    "$(gum style --bold 'COMMANDS')" \
+    "  state   [instance]   Show state (all if no arg)" \
+    "  start   [instance]   Start (with type selector)" \
+    "  stop    [instance]   Stop instance" \
+    "  change  [instance]   Change type (stops if running)" \
+    "" \
+    "$(gum style --bold 'DEFAULT')" \
+    "  $DEFAULT_INSTANCE" \
+    "" \
+    "$(gum style --bold 'ALIASES')" \
+    "  ${(k)INSTANCES}"
+}
+
+case "${1:-}" in
+  state)  shift; cmd_state "$@" ;;
+  start)  shift; cmd_start "$@" ;;
+  stop)   shift; cmd_stop "$@" ;;
+  change) shift; cmd_change "$@" ;;
+  -h|--help|help) usage ;;
+  *)
+    usage >&2
+    exit 1
+    ;;
+esac

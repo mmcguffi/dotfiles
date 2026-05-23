@@ -1,0 +1,6 @@
+[default]
+region = us-east-1
+output = json
+
+# Add machine/work-specific AWS SSO profiles in ~/.aws/config.local or replace
+# this file locally. Do not publish account IDs or SSO start URLs.

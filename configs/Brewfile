@@ -1,0 +1,19 @@
+# macOS-only packages managed via Homebrew
+# These are things Nix can't handle well (GUI casks, tap-only tools)
+# Run: brew bundle --file="$HOME/dotfiles/configs/Brewfile"
+
+# Taps
+tap "databricks/tap"
+tap "seqeralabs/tap"
+
+# Tap-only CLI tools
+brew "databricks/tap/databricks"
+brew "seqeralabs/tap/tw"
+
+# GUI apps (casks)
+cask "iterm2"
+cask "visual-studio-code"
+cask "obsidian"
+cask "raycast"
+cask "easy-move+resize"
+cask "keepingyouawake"

@@ -1,0 +1,21 @@
+name: goto
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.12
+  - samtools
+  - jupyter
+  - jupyterlab
+  - matplotlib
+  - plotly
+  - pandas
+  - numpy
+  - seaborn
+  - biopython
+  - ipython
+  - scikit-learn
+  - awscli
+  - pip
+  - pip:
+    - awss3tui

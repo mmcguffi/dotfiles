@@ -1,0 +1,121 @@
+{
+    "terminal.explorerKind": "external",
+    "terminal.external.osxExec": "/Applications/iTerm.app",
+    "window.zoomLevel": 1.5,
+    "terminal.integrated.fontFamily": "MesloLGM Nerd Font Mono",
+    "terminal.integrated.fontSize": 12,
+    "terminal.integrated.fontWeightBold": "normal",
+    "python.terminal.activateEnvironment": false,
+    "python.defaultInterpreterPath": "${env:HOME}/.nix-profile/bin/python3",
+    "workbench.colorTheme": "Default Dark+",
+    "workbench.colorCustomizations": {
+        "terminal.background": "#001e27",
+        "terminal.foreground": "#708284",
+        "terminalCursor.background": "#002831",
+        "terminalCursor.foreground": "#708284",
+        "terminal.ansiBlack": "#002831",
+        "terminal.ansiBlue": "#2176c7",
+        "terminal.ansiBrightBlack": "#475b62",
+        "terminal.ansiBrightBlue": "#708284",
+        "terminal.ansiBrightCyan": "#819090",
+        "terminal.ansiBrightGreen": "#475b62",
+        "terminal.ansiBrightMagenta": "#5956ba",
+        "terminal.ansiBrightRed": "#bd3613",
+        "terminal.ansiBrightWhite": "#fcf4dc",
+        "terminal.ansiBrightYellow": "#536870",
+        "terminal.ansiCyan": "#259286",
+        "terminal.ansiGreen": "#738a05",
+        "terminal.ansiMagenta": "#c61c6f",
+        "terminal.ansiRed": "#d11c24",
+        "terminal.ansiWhite": "#eae3cb",
+        "terminal.ansiYellow": "#a57706",
+        "terminal.selectionBackground": "#002831"
+    },
+    "python.analysis.extraPaths": [],
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "diffEditor.renderSideBySide": false,
+    "better-comments.tags": [
+        {
+            "tag": "!",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "?",
+            "color": "#3498DB",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "//",
+            "color": "#474747",
+            "strikethrough": true,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "todo",
+            "color": "#FF8C00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "*",
+            "color": "#98C379",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        }
+    ],
+    "ruff.enable": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    "ruff.organizeImports": true,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "diffEditor.ignoreTrimWhitespace": false,
+    "[dockercompose]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+        "editor.autoIndent": "advanced",
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": true
+        },
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[github-actions-workflow]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[yaml]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "editor.formatOnSave": true,
+    "claudeCode.preferredLocation": "panel",
+    "terminal.integrated.initialHint": false,
+    "notebook.editorOptionsCustomizations": {
+        "editor.tabSize": 4,
+        "editor.indentSize": 4,
+        "editor.insertSpaces": true
+    },
+    "editor.accessibilitySupport": "off",
+    "editor.renderWhitespace": "all",
+    "makefile.configureOnOpen": true
+}

@@ -1,0 +1,2 @@
+shell = "/bin/zsh"
+forward_env = ["TERM", "PATH", "SSH_CONNECTION", "SSH_CLIENT", "SSH_TTY"]

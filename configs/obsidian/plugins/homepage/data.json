@@ -1,0 +1,28 @@
+{
+  "version": 4,
+  "homepages": {
+    "Main Homepage": {
+      "value": "Home",
+      "kind": "Daily Note",
+      "openOnStartup": false,
+      "openMode": "Replace all open notes",
+      "manualOpenMode": "Keep open notes",
+      "view": "Default view",
+      "revertView": true,
+      "openWhenEmpty": false,
+      "refreshDataview": false,
+      "autoCreate": false,
+      "autoScroll": false,
+      "pin": false,
+      "commands": [
+        {
+          "id": "workspace:close-others",
+          "period": "Both"
+        }
+      ],
+      "alwaysApply": false,
+      "hideReleaseNotes": false
+    }
+  },
+  "separateMobile": false
+}
