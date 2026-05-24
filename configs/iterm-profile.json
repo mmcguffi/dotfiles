@@ -241,7 +241,7 @@
         "slogin",
         "telnet"
       ],
-      "Use Non-ASCII Font": false,
+      "Use Non-ASCII Font": true,
       "Custom Directory": "No",
       "Use Selected Text Color (Light)": true,
       "Bold Color (Light)": {
@@ -328,7 +328,7 @@
         "Blue Component": 0.45882352941176469,
         "Green Component": 0.43137254901960786
       },
-      "Normal Font": "MesloLGMNF-Regular 15",
+      "Normal Font": "MesloLGS-NF-Regular 15",
       "Use Selected Text Color (Dark)": true,
       "Foreground Color": {
         "Red Component": 0.062745101749897003,
@@ -376,7 +376,7 @@
       },
       "Flashing Bell": false,
       "Brighten Bold Text (Light)": true,
-      "Non Ascii Font": "Monaco 12",
+      "Non Ascii Font": "MesloLGS-NF-Regular 15",
       "Ansi 7 Color (Dark)": {
         "Red Component": 0.93333333333333335,
         "Color Space": "sRGB",
