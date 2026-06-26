@@ -64,7 +64,7 @@
 
     sessionVariables = {
       # Claude Code (Bedrock)
-      CLAUDE_CODE_USE_BEDROCK = "1";
+      # CLAUDE_CODE_USE_BEDROCK = "1";
       AWS_REGION = "us-west-2";
       ANTHROPIC_SMALL_FAST_MODEL = "us.anthropic.claude-3-5-haiku-20241022-v1:0";
 
