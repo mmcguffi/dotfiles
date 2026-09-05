@@ -36,19 +36,6 @@
     };
 
     # npm global tools — installed/updated on each `home-manager switch`
-    activation.claudeSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      mkdir -p "$HOME/.claude"
-      target="$HOME/.claude/settings.json"
-      [ -L "$target" ] && rm "$target"
-      cp "${./configs/claude-settings.json}" "$target"
-      chmod u+w "$target"
-
-      target="$HOME/.claude/CLAUDE.md"
-      [ -L "$target" ] && rm "$target"
-      cp "${./configs/claude-md.md}" "$target"
-      chmod u+w "$target"
-    '';
-
     activation.npmGlobals = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       export PATH="${pkgs.nodejs_22}/bin:$PATH"
       export NPM_CONFIG_PREFIX="$HOME/.npm-global"
